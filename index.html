@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=yes" />
+		<title>Rainbow jQuery Module Demo
+		</title>
+	<link rel="stylesheet" type="text/css" href="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css" ></link>
+	<style type="text/css" media="screen, projection">
+	body {
+		background: black;
+		margin: 0;
+		padding: 0;
+		color: white; 
+
+ 	}
+ 	p {
+ 		text-align:center;
+ 	}
+ 	pre {
+ 		padding-left: 4em;
+ 		border: dashed thin black;
+ 	}
+ 	.ui-header .ui-title, .ui-footer .ui-title {
+ 		height: auto;
+ 		text-align: center;
+ 		font-size: 1em;
+ 		white-space: normal;
+ 		
+ 	}
+ 	
+ 	.rwrap.right, 
+ 	.rwrap.left {
+ 		width: 50%;
+ 		padding: 0;
+ 		margin: 0;
+ 		float: left;
+ 	}
+	.rwrap.left {
+ 		float: right;
+	}
+ 	.rwrap.left {
+ 		margin-left: 0;
+ 		margin-right: 0;
+ 	}
+ 	.rwrap.right>div,
+ 	.rwrap.left>div{
+ 		height: 5em;
+ 		width: 10%;
+ 		display: inline-block;
+ 	}
+ 	
+ 	.rwrap.asc>div, 
+ 	.rwrap.desc>div {
+ 		height: .4em;
+ 	}
+ 	
+ 	h1, h3, .ui-footer div {
+ 		padding: 1% 2% ;
+ 	}
+ 	hr { 
+ 		border: solid white 1px;
+ 		background: none;
+ 	}
+ 	.scale {
+ 		margin: 0;
+ 		padding: 0;
+ 		background: orange;
+ 	}
+ 	.ui-grid-c>div {
+ 		border-top: solid #000 1%;
+
+ 	}
+ 	.xs-visible {
+ 		display: none;
+ 	}
+	</style>
+	<style type="text/css" media="only screen and (max-device-width: 480px)">
+	.xs-hidden {
+		display: none;
+	}
+ 	.xs-visible {
+ 		display: inherit;
+ 	}
+	</style> 
+	<script type="text/javascript" src="http://code.jquery.com/jquery-2.1.4.min.js">
+	</script>
+	<script type="text/javascript">//<!--
+
+				
+$(document).bind("mobileinit", function(){
+//  alert("mobile");
+  $.extend(  $.mobile , 
+  { loadingMessage:"dope"
+  });
+});
+
+//-->
+</script> <script type="text/javascript" src="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js">
+</script> <script type="text/javascript" src="jquery-rainbow.js">
+</script> <script type="text/javascript">//<!--
+	
+	function objString(o, ind) {
+	   var i = ind||0
+		var indent = function() {
+			var s = "  "
+			for (var x = 0; x < i; x++) {
+				s+=" "
+			}
+			return s
+		}
+		if ($.isArray(o)) {
+			s = "["
+			$(o).each(function(){
+				s+=this + ", "
+			})
+			return s.substr(0,s.length-2) + "]"
+		}
+		var s = "{"
+		for (var name in o) {
+			var v = o[name]
+			if (typeof v == "object") {
+				v = objString(v, 2 + i)
+			}
+			s+= "\n" + indent() + name + ": " + v + ","
+		}
+		return ((s.length > 1)? s.substr(0,s.length -1) + "\n" + indent().substr(2) : s) + "}"
+	}
+
+
+$(document).ready(function () {
+
+	$("div.default").randomColors();
+
+	var swap = $("div.swap").data("randomColors",{
+		timeout:300, 
+		css:{height: ".5em"}, 
+		elements:6, 
+		mode:'swap', 
+		initialize:true 
+	});
+	swap.randomColors(swap.data("randomColors"))
+
+	var test = $("div.test").data("randomColors",{
+		sequence:{tolerance:0.2, fwd:true, step:12},
+		elements: 100,
+		initialize:true,
+		css:{height:".1em"},
+		timeout:80,
+		colors:{r:["#b","#F"], g:["#b","#F"], b:["#b", "#F"], a:[0.3,0.7]}})
+	test.randomColors(test.data("randomColors"))
+
+	var def2 = $("div.default2").data("randomColors", {
+		initialize:false,
+		timeout:322,
+		colors:{r:["#0","#F"], g:["#0","#F"], b:["#8", "#8"]}
+	})
+	def2.randomColors(def2.data("randomColors"))
+
+	var des = $("div.desc, div.right").data("randomColors", {
+		ascending:false, 
+		timeout:300, 
+		elements:10,
+		css:{}
+	})
+	des.randomColors(des.data("randomColors"));
+
+
+	var asc = $("div.asc, div.left").data("randomColors", {
+		ascending:true, 
+		timeout:300, 
+		elements:10,
+		css:{}
+
+	});
+	asc.randomColors(asc.data("randomColors"));
+
+	var red = $("div.red").data("randomColors", {
+		colors:{r:[180,255], g:[0,0], b:[0,0]}, 
+		initialize:true, 
+		ascending:true, 
+		timeout:60, 
+		elements:3, //content:true,
+		sequence:{randomize: false, step:8, tolerance:0.6}
+	});
+	red.randomColors(red.data("randomColors"));
+
+
+	$("body").randomColors("randomColor", {
+		colors:{r:["#3", "#7"], g:[0,100], b:["#0", "#7"], outlineColor:false, color:true}, 
+		timeout:10000
+	});
+
+	var details = function(j) { 
+   	var x = j || $(d[Math.round(Math.min(Math.random() * (d.length ), d.length -1))])
+		//x.css("border","solid 1px red").css("boxSizing","border-box")
+		var y = $("<div>").attr("class", x.attr("class")).css("width", "100%")
+		$(".main>div").first().after(y)
+		var cl = x.attr("class")
+		y.before($("<h4>").text(cl.substr(cl.lastIndexOf(" ")))).css("clear", "both")
+		y.before($("<pre>").append(
+			$("<code>")
+		  .text("options: " + objString(x.data("randomColors")))))
+		y.randomColors(x.data("randomColors"))
+	}
+	
+	$("h1").bind("click", function(event){
+		event.preventDefault();
+		$(this).randomColors("toggleRunning");
+		$("div.rwrap").randomColors("toggleRunning");
+	});
+
+
+	$("div.rwrap").randomColors("stop")
+	.randomColors("randomColor").each(function(){
+		var $this = $(this);
+		var click = function(event){
+		  event.preventDefault()
+	  	  if (event.altKey) {
+			 return details($this.closest(".rwrap"))
+		  }
+		  $this.closest(".rwrap").randomColors("toggleRunning");
+		  return false;
+		}
+		$this.mousedown(click);
+		$this.bind("swipe", function() {details($this.closest(".rwrap"))})
+	});
+
+}); // end document.ready
+
+//-->
+</script> 
+	</head>
+	<body>
+		<div data-role="page">
+			<div data-role="header">
+				<h1>
+					Rainbow jQuery Module Demo
+				</h1>
+			</div>
+			<div data-role="content" class="main">
+				<div class="ui-grid-c ">
+					<div class="ui-block-b ">
+						<div>
+							<div class="rwrap test">
+							</div>
+						</div>
+					</div>
+					<div class="ui-block-c flip in">
+						<div class="rwrap default">
+						</div>
+					</div>
+					<div class="ui-block-d flip in">
+						<div class="rwrap default2">
+						</div>
+					</div>
+					<div class="ui-block-b ">
+						<div class="rwrap swap">
+						</div>
+					</div>
+					<div class="ui-block-c">
+						<div class="rwrap asc">
+						</div>
+						<div class="rwrap desc">
+						</div>
+					</div>
+					<div class="ui-block-d flip in">
+						<div class="rwrap red">
+						</div>
+						<div class="rwrap red">
+						</div>
+					</div>
+					<div class="ui-block-d">
+						<div class="rwrap right">
+						</div>
+						<div class="rwrap left">
+						</div>
+						<div style="clear:right"><!-- --></div>
+					</div>
+					<div class="ui-block-d">
+						<div class="rwrap desc">
+						</div>
+						<div class="rwrap asc">
+						</div>
+					</div>
+				</div>
+				<div><p class="xs-hidden">Click on a rainbow or title to toggle animations. 
+				<br/>ALT-click on a rainbow for details.</p>
+				<p class="xs-visible">Tap on a rainbow or title to toggle animations. 
+				<br/>Swipe a rainbow for details.</p>
+				</div>
+			</div>
+			<div data-role="footer" >
+				<p>
+					Copyright 2015 Marco Glur<br/>
+					Open source under MIT license
+				</p>
+			</div>
+		</div>
+	</body>
+</html>
