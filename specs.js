@@ -14,6 +14,9 @@ describe("randomColors.parseRGB", function () {
     it("called with empty gives null", function () {
         expect($().randomColors("parseRGB", "")).toBeNull();
     })
+    it("called with transparent gives null", function () {
+        expect($().randomColors("parseRGB", "transparent")).toBeNull();
+    })
     it("called with rgb(1,1,1) gives { r: 1, g: 1, b: 1, a: 1 }", function () {
         expect($().randomColors("parseRGB", "rgb(1,1,1)")).toEqual({r: 1, g: 1, b: 1, a: 1});
     })
