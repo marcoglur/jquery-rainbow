@@ -1,6 +1,6 @@
 /***************************************************************
  *
- * rainbow jQuery plugin v1.1
+ * rainbow jQuery plugin v1.1.1
  *
  * $("div").randomColors([options]);
  * default options:
@@ -249,7 +249,7 @@
 
                 if ((!sequence.randomize) && settings.mode != "swap") {
                     current = $(previous).css("backgroundColor");
-                    current = ( (!current) && !/rgb/.exec(current) ) ? null : current;
+                    current = ( (!current) || !/rgb/.exec(current) ) ? null : current;
                     if (current) {
                         var p = methods.parseRGB(current);
                         if (p && !p.a) {
@@ -473,6 +473,7 @@
                 if (typeof parts != "object") {
                     return null
                 }
+                var color
                 if ($.rgba) {
                     color = "rgba(" + Math.abs(Math.floor(parts.r))
                         + "," + Math.abs(Math.floor(parts.g))
@@ -509,7 +510,7 @@
             randomColor: function (options) {
                 var settings = {
                     timeout: 0,
-                    colors: {r: [0, 255], g: [0, 255], b: [0, 255], a: [1, 1]},
+                    colors: {r: [0, 255], g: [0, 255], b: [0, 255], a: 1},
                     css: {},
                     backgroundColor: true,
                     nextColor: methods.nextColor
@@ -520,7 +521,7 @@
                 }
 
                 return this.each(function () {
-                    $this = $(this);
+                    var $this = $(this);
 
                     if (1 <= settings.timeout) {
                         var toThis = $this;
@@ -550,7 +551,7 @@
                     elements: 3,
                     intialize: true,
                     ascending: false,
-                    colors: {r: [122, 255], g: [122, 255], b: [122, 255], a: [1, 1]}
+                    colors: {r: [122, 255], g: [122, 255], b: [122, 255], a: 1}
                 };
 
                 if (options) {
