@@ -1,6 +1,6 @@
   /***************************************************************
    *
-   * rainbow jQuery plugin v1.0
+   * rainbow jQuery plugin v1.1
    *
    * $("div").randomColors([options]);
    * default options:
@@ -48,7 +48,6 @@
 
 (function($){
 
-debug=false;
 $.rgba=true;
 
 $.fn.randomColors=function(method) {
@@ -61,47 +60,111 @@ $.extend({
 
 	var methods = {
 
-	  GetRandom:function( min, max ) {
-		if( min > max ) {
-			return( -1 );
+	  getRandom:function(min, max ) {
+		if (min == null) min = 0
+		if (max == null) max = min+1
+		if ( min > max ) {
+			return methods.getRandom(max,min)
 		}
-		if( min == max ) {
-			return( min );
+		if ( min == max ) {
+			return min
 		}
-		return( min + parseInt( Math.random() * ( max-min+1 ) ) );
+		return Math.max(min, Math.min(max, min + ( Math.random() * ( max-min ) ) ) )
 	  },
+		// Deprecated
+		GetRandom: this.getRandom,
+
 	  cleanupColors:function(colors, isA) {
-		if ($.isArray(colors)) {
+		if ($.isArray(colors) && colors.length == 2) {
 	  		colors = [methods.cleanupColors(colors[0], isA),
 			  		  methods.cleanupColors(colors[1], isA)];
+
+
 		} else if (typeof colors === "object") {
 	  		colors.r = methods.cleanupColors(colors.r);
 	  		colors.g = methods.cleanupColors(colors.g);
 	  		colors.b = methods.cleanupColors(colors.b);
 	  		colors.a = methods.cleanupColors(colors.a, true);
+
+
 	  	} else if (typeof colors === "string") {
-	  		var match = colors.match(/^#([a-f0-9][a-f0-9]?)$/i);
+	  		var match = colors.match(/^#([a-f0-9][a-f0-9]*)$/i);
 	  		if (match && match[1]) {
-	  		 	var hex = match[1];
-	  		 	if (1 == match[1].length) {
-	  		 		hex = hex + "" + hex;
-	  		 	}
-	  		 	colors = methods.cleanupColors(parseInt(hex, 16));
-				
+				var hex = match[1];
+				if (1 == hex.length) {
+					hex = hex + "" + hex;
+				}
+				switch (hex.length) {
+					case 1:
+						colors = parseInt(hex, 16)*(isA?1/255:1)
+						colors += 16*colors
+						break
+					case 2:
+						colors = parseInt(hex, 16)*(isA?1/255:1)
+						break
+					case 3:
+						colors = methods.cleanupColors(
+							{r:"#"+hex.substr(0,1),
+							 g:"#"+hex.substr(1,1),
+							 b:"#"+hex.substr(2,1)})
+						break
+					case 6:
+						colors = methods.cleanupColors(
+							{r:"#"+hex.substr(0,2),
+							 g:"#"+hex.substr(2,2),
+							 b:"#"+hex.substr(4,2)})
+						break
+					case 4:
+						colors = methods.cleanupColors(
+							{r:"#"+hex.substr(1,1),
+							 g:"#"+hex.substr(2,1),
+							 b:"#"+hex.substr(3,1),
+							 a:"#"+hex.substr(0,1)})
+						break
+					case 8:
+						colors = methods.cleanupColors(
+							{r:"#"+hex.substr(2,2),
+							 g:"#"+hex.substr(4,2),
+							 b:"#"+hex.substr(6,2),
+							 a:"#"+hex.substr(0,2)})
+				}
 	  		}
-	  		else {
-	  			colors = isA?1:0;
-	  		}
+			else if (!isA && !isNaN(parseInt(colors))) {
+				colors = parseInt(colors)
+			} else if (isA && !isNaN(parseFloat(colors))) {
+				colors = parseFloat(colors)
+			} else {
+				if ("transparent" == colors)
+					colors = "rgba(0,0,0,0)"
+
+				var parsed = methods.parseRGB(colors)
+				if (parsed) {
+					colors = parsed
+				} else if (typeof getComputedStyle == "function") {
+					var n = $("<color>").css("color", colors)
+					colors = methods.parseRGB(getComputedStyle(n.appendTo($("body"))[0]).color)
+					n.remove()
+				} else {
+					colors = isA ? 1 : 0;
+				}
+			}
+
+
 	  	} else if (typeof colors === "number") {
-	  		if (isA && colors > 1) {
-	  			colors = 1;
-	  		}
-	  		
+			if (isNaN(colors)) {
+				colors = isA?1:0;
+			}
 	  		if (colors > 255) {
 	  			colors = 255;
 	  		} else if (colors < 0) {
 	  			colors = 0;
 	  		}
+			if (isA && colors > 1) {
+ 				colors = 1;
+ 			} else if (!isA) {
+ 				colors = Math.round(colors);
+ 			}
+
 	  	} else {
 			colors = isA?1:0;
 	  	}
@@ -189,10 +252,18 @@ $.extend({
 			if (settings.startColor && (!current)) {
 				color = settings.startColor;
 			} else {
-				color = methods.toRGB({r:methods.GetRandom(settings.colors.r[0],settings.colors.r[1]),
-										g:methods.GetRandom(settings.colors.g[0],settings.colors.g[1]),
-										b:methods.GetRandom(settings.colors.b[0],settings.colors.b[1]),
-										a:methods.GetRandom(settings.colors.a[0],settings.colors.a[1])});
+				var r = function(p, isA) {
+					if ($.isArray(p)) {
+						p = methods.getRandom(p[0], p[1])
+						if (true!=isA)
+							p = Math.round(p)
+					}
+					return p
+				}
+				color = methods.toRGB({ r:r(settings.colors.r),
+										g:r(settings.colors.g),
+										b:r(settings.colors.b),
+										a:r(settings.colors.a, true)});
 			}
 		} else {
 			color = current;
@@ -210,7 +281,7 @@ $.extend({
 	  nextParts:function(parts, options) {
 	  	var sequence = {fwd:true, flat:false, parts:false, randomize:true, step:20};
 	  	var settings = {
-	  		colors:{r:[0,255],g:[0,255],b:[0,255], a:[0,1]},
+	  		colors:{r:[0,255],g:[0,255],b:[0,255], a:1},
 	  		rc:{currentParts:[]}};
 	  	
 	  	
@@ -259,7 +330,7 @@ $.extend({
 		var sqParts = sequence.parts;
 
 	  	if (sqParts.length > 1 && sequence.randomize) {
-	  		sqParts = [sqParts[methods.GetRandom(0, sqParts.length)]];
+	  		sqParts = [sqParts[methods.getRandom(0, sqParts.length)]];
 	  	} else {
 	  	    if (sequence.flat) {
 	  	    	sqParts = p;
@@ -278,7 +349,6 @@ $.extend({
 					    if (p[i] == sqParts[x] || sequence.flat) {
 					    	settings.rc.rev =!settings.rc.rev;
 					    	sequence.fwd =!sequence.fwd;
-					    	return;
 					    } else {
 		  	    			p[i] = sqParts[x];
 		  	    		}
@@ -363,7 +433,7 @@ $.extend({
 	  		if ("a"!=part) {
 	  			f = settings.step*settings.tolerance;
 	  			if (f > 0 ) {
-					f = methods.GetRandom(Math.floor(f*-1),
+					f = methods.getRandom(Math.floor(f*-1),
 										  Math.ceil(f));
 				}
 			} else {
@@ -379,6 +449,8 @@ $.extend({
   		return current;
 	  },
 	  toRGB:function(parts) {
+		  if (null == parts) {return null}
+		  if (typeof parts != "object") {return null}
 			if ($.rgba) {
 				color = "rgba("+ Math.abs(Math.floor(parts.r))
 							  +","+Math.abs(Math.floor(parts.g))
@@ -393,10 +465,12 @@ $.extend({
 			return color;
 	  },
 	  parseRGB:function(rgba) {
-	  	var parts = rgba.match(/([0-9]{1,3})\D*([0-9]{1,3})\D*([0-9]{1,3})\D*([\d]?)/);
+		if (null == rgba) {return null}
+		if (typeof rgba != "string") {return null}
+	  	var parts = rgba.match(/([0-9]{1,3})\D*([0-9]{1,3})\D*([0-9]{1,3})\D*([01]?\.?[\d]*)/)
 	  	
 		if (parts && parts[1] && parts[2] && parts[3]) {
-			var parts = {r:parseInt(parts[1]), g:parseInt(parts[2]), b:parseInt(parts[3]), a:parts[4]?parseInt(parts[4]):1};
+			var parts = {r:parseInt(parts[1]), g:parseInt(parts[2]), b:parseInt(parts[3]), a:parts[4]?parseFloat(parts[4]):1};
 			return parts;
 		}
 		return null;
@@ -448,7 +522,7 @@ $.extend({
 			$.extend( settings, options );
 		}
 		
-		var ret = this.each(function() {
+		return this.each(function() {
 			var $this = $(this);
 			
 			if (1 <= settings.timeout) {
@@ -465,12 +539,12 @@ $.extend({
 				var newDiv =$("<div ></div>");
 				if (settings.ascending) {
 					newDiv.appendTo($this);
-					if ($this.children().length > settings.elements) {
+					if ($this.children().size() > settings.elements) {
 						$this.children().first().remove();
 					}
 				} else {
 					newDiv.prependTo($this);
-					if ($this.children().length > settings.elements) {
+					if ($this.children().size() > settings.elements) {
 						$this.children().last().remove();
 					}
 				}
@@ -490,8 +564,6 @@ $.extend({
 			}
 			
 		});
-		
-		return ret;
 	  }
 	};
 	if (methods[method]) {
