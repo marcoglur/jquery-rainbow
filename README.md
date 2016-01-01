@@ -18,7 +18,7 @@ default options:
 	elements:3,
 	initialize:true,
 	ascending:false, //|true|undefined
-	colors:{r:[122,255], g:[122,255], b:[122,255], a:[1,1]}
+	colors:{r:[122,255], g:[122,255], b:[122,255], a:1}
 
 
 `$("div").randomColors("randomColor", [options])`
@@ -26,7 +26,7 @@ default options:
 default options:
 
 	timeout:0,
-	colors:{r:[0,255], g:[0,255], b:[0,255], a:[1,1]},
+	colors:{r:[0,255], g:[0,255], b:[0,255], a:1},
 	css:{},
 	backgroundColor:true, // color, border[(Left,Bottom,Right,Top)]Color, outlineColor
 	nextColor:methods.nextColor
