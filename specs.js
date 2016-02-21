@@ -1,3 +1,32 @@
+var customMatchers = {
+    "toBeWithinPrecision": function () {
+        return {
+            compare: function (actual, expected, precision) {
+
+                if (typeof precision == "number") {
+                    precision = [precision]
+                } else if (!Array.isArray(precision) || !precision.length) {
+                    precision = [.005]
+                }
+                var d = Math.abs(expected - actual).toFixed(16);
+
+                var upper = Math.abs(precision[0]);
+                var lower = Math.abs(precision[1] || precision[0]);
+                return {
+                    pass: ( expected == actual )
+                       || ( expected > actual && d <= upper )
+                       || ( expected < actual && d <= lower )
+
+                }
+            }
+        };
+    }
+};
+
+beforeEach(function () {
+    jasmine.addMatchers(customMatchers)
+});
+
 describe("randomColors.parseRGB", function () {
     it("called with no arg gives null", function () {
         expect($().randomColors("parseRGB")).toBeNull();
@@ -25,19 +54,21 @@ describe("randomColors.parseRGB", function () {
     })
 })
 
-
 describe("randomColors.getRandom", function () {
-    it("called with no arg gives undefined", function () {
-        expect($().randomColors("getRandom")).toBeCloseTo(.5, 0);
+    it("called with no arg gives between 0 and 1", function () {
+        expect($().randomColors("getRandom")).toBeWithinPrecision(.5, .5);
+        expect($().randomColors("getRandom")).toBeCloseTo(.5, -Math.log10(1.0001));
     })
-    it("called with 1 gives number between 0 and 1", function () {
-        expect($().randomColors("getRandom", 1)).toBeCloseTo(1.5, 0);
+    it("called with 1 gives number between 1 and 2", function () {
+        expect($().randomColors("getRandom", 1)).toBeWithinPrecision(1.5, .5);
+        expect($().randomColors("getRandom", 1)).toBeCloseTo(1.5, -Math.log10(1.0001));
     })
     it("called with 1,1 gives 1", function () {
         expect($().randomColors("getRandom", 1, 1)).toBe(1);
     })
     it("called with 1,1.1 close to 1.05,1", function () {
-        expect($().randomColors("getRandom", 1, 1.1)).toBeCloseTo(1.05, 1);
+        expect($().randomColors("getRandom", 1, 1.1)).toBeWithinPrecision(1.05, .05);
+        expect($().randomColors("getRandom", 1, 1.1)).toBeCloseTo(1.05, .99999);
     })
 })
 
@@ -165,6 +196,147 @@ describe("randomColors.cleanupColors", function () {
         expect(blue.g).toBeLessThan(127);
         expect(blue.a).toBe(1);
     })
-});
+})
 
+describe("randomColor", function() {
+	it("randomColor is rgb(95, 0, 255, [0.3,0.4])", function() {
+	var div1 = $("<div>");
+	$("body").append(div1);
+		div1.randomColors("randomColor", {colors:{r:95, g:0, b:255, a:[0.3,0.4]}});
+		var bg = div1.randomColors("parseRGB", div1.css("backgroundColor"));
+		expect(bg.r).toBe(95)
+		expect(bg.g).toBe(0)
+		expect(bg.b).toBe(255)
+		expect(bg.a).toBeWithinPrecision(.35,.05)
+	})
+	it("randomColor is rgb([120,125], 0, 255, 1)", function() {
+	var div1 = $("<div>");
+	$("body").append(div1);
+		div1.randomColors("randomColor", {colors:{r:[130,140], g:0, b:255, a:1}});
+		var bg = div1.randomColors("parseRGB", div1.css("backgroundColor"));
+
+		expect(bg.r).toBeWithinPrecision(130,[0,10])
+		expect(bg.g).toBe(0)
+		expect(bg.b).toBe(255)
+		expect(bg.a).toBe(1)		
+	})
+})
+
+
+
+
+describe("toBeWithinPrecision()", function () {
+
+    it("some basic reference checks on toBeWithinPrecision precision", function () {
+        expect(0.5).toBeWithinPrecision(.5);
+        expect(0.495).toBeWithinPrecision(.5);
+        expect(0.494).not.toBeWithinPrecision(.5);
+        expect(0.505).toBeWithinPrecision(.5);
+        expect(0.506).not.toBeWithinPrecision(.5);
+
+        expect(0.5).toBeWithinPrecision(.5, []);
+        expect(0.495).toBeWithinPrecision(.5, []);
+        expect(0.494).not.toBeWithinPrecision(.5, []);
+        expect(0.505).toBeWithinPrecision(.5, []);
+        expect(0.506).not.toBeWithinPrecision(.5, []);
+
+        expect(0.5).toBeWithinPrecision(.5, 0);
+        expect(0.45).toBeWithinPrecision(.5,.05);
+        expect(0.449).not.toBeWithinPrecision(.5, .05);
+        expect(0.501).toBeWithinPrecision(.5, .001);
+        expect(0.5011).not.toBeWithinPrecision(.5, .001);
+
+        expect(0.1).toBeWithinPrecision(.5, [.5, .1]);
+        expect(0.8).not.toBeWithinPrecision(.5, [.5, .1]);
+        expect(0.1).not.toBeWithinPrecision(.5, [.1, .5]);
+        expect(0.8).toBeWithinPrecision(.5, [.1, .5]);
+    })
+})
+
+describe("toBeCloseTo()", function () {
+    it("some basic reference checks on toBeCloseTo precision", function () {
+
+        // for better understanding of the toBeCloseTo() matcher
+        // might change in future..? see also https://github.com/jasmine/jasmine/pull/264
+
+        //compare: function(actual, expected, precision) {
+        //    if (precision !== 0) {
+        //        precision = precision || 2
+        //    }
+        //    return {
+        //        pass: Math.abs(expected - actual) < Math.pow(10, - precision) / 2
+        //    }
+        //}
+
+        // some simple examples for precision:
+        //-1: <  5
+        //-2: < 50
+        //-3: <500
+        // 0: <.5
+        // 1: <.05
+        // 2: <.005
+        // but
+
+        expect(0.1).not.toBeCloseTo(.5);
+        expect(0.1).not.toBeCloseTo(.5, 2);
+        expect(0.9).not.toBeCloseTo(.5);
+        expect(0.9).not.toBeCloseTo(.5, 2);
+        expect(0.51).not.toBeCloseTo(.5);
+        expect(0.51).not.toBeCloseTo(.5, 2);
+        expect(0.49).not.toBeCloseTo(.5);
+        expect(0.49).not.toBeCloseTo(.5, 2);
+        expect(0.54).not.toBeCloseTo(.5);
+        expect(0.54).not.toBeCloseTo(.5, 2);
+        expect(0.505).not.toBeCloseTo(.5);
+        expect(0.505).not.toBeCloseTo(.5, 2);
+        expect(0.504).toBeCloseTo(.5);
+        expect(0.504).toBeCloseTo(.5, 2);
+        expect(0.495).not.toBeCloseTo(.5);
+        expect(0.495).not.toBeCloseTo(.5, 2);
+        expect(0.496).toBeCloseTo(.5);
+        expect(0.496).toBeCloseTo(.5, 2);
+
+        expect(0.1).toBeCloseTo(.5, 0);
+        expect(0.9).toBeCloseTo(.5, 0);
+        expect(0).not.toBeCloseTo(.5, 0);
+        expect(1).not.toBeCloseTo(.5, 0);
+        expect(0.00000000000001).toBeCloseTo(.5, 0);
+        expect(0.99999999999999).toBeCloseTo(.5, 0);
+
+        expect(0).toBeCloseTo(.5, -0.00000000001);
+        expect(1).toBeCloseTo(.5, -0.00000000001);
+        expect(0).not.toBeCloseTo(.5, 0.00000000001);
+        expect(1).not.toBeCloseTo(.5, 0.00000000001);
+
+        expect(1).toBeCloseTo(3, -Math.log10(4.0001));
+        expect(1).not.toBeCloseTo(3, -Math.log10(4));
+        expect(1).not.toBeCloseTo(3.1, -Math.log10(4.0001));
+        expect(2).toBeCloseTo(3.5, -Math.log10(3.0001));
+        expect(2).not.toBeCloseTo(3.5, -Math.log10(3));
+        expect(2).toBeCloseTo(3.5, -Math.log10(3.0001));
+        expect(0.9999).not.toBeCloseTo(1.5, -Math.log10(1.0001));
+        expect(2.0001).not.toBeCloseTo(1.5, -Math.log10(1.0001));
+
+        expect(1).toBeCloseTo(1.05, .99999);
+        expect(1.1).toBeCloseTo(1.05, .99999);
+        expect(1).not.toBeCloseTo(1.05, 1);
+        expect(1.1).not.toBeCloseTo(1.05, 1);
+        expect(.99999).not.toBeCloseTo(1.05, .99999);
+        expect(1.10001).not.toBeCloseTo(1.05, .99999);
+
+        expect(130).toBeCloseTo(135,-1.001);
+        expect(140).toBeCloseTo(135,-1.001);
+        expect(130).not.toBeCloseTo(135,-1);
+        expect(140).not.toBeCloseTo(135,-1);
+        expect(129).not.toBeCloseTo(135,-1.001);
+        expect(141).not.toBeCloseTo(135,-1.001);
+
+        expect(.3).toBeCloseTo(.35,.99999999);
+        expect(.4).toBeCloseTo(.35,.99999999);
+        expect(.3).toBeCloseTo(.35,1);
+        expect(.4).not.toBeCloseTo(.35,1);
+        expect(.29999).not.toBeCloseTo(.35,.99999999);
+        expect(.40001).not.toBeCloseTo(.35,.99999999);
+    })
+})
 
