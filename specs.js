@@ -206,7 +206,7 @@ describe("randomColor", function() {
 		expect(bg.b).toBe(255)
 		expect(bg.a).toBeWithinPrecision(.35,.05)
 	})
-	it("randomColor is rgb([120,125], 0, 255, 1)", function() {
+	it("randomColor is rgb([130,140], 0, 255, 1)", function() {
 	var div1 = $("<div>");
 	$("body").append(div1);
 		div1.randomColors("randomColor", {colors:{r:[130,140], g:0, b:255, a:1}});
@@ -236,10 +236,16 @@ describe("toBeWithinPrecision()", function () {
         expect(0.506).not.toBeWithinPrecision(.5, []);
 
         expect(0.5).toBeWithinPrecision(.5, 0);
-        expect(0.45).toBeWithinPrecision(.5,.05);
+        expect(0.45).toBeWithinPrecision(.5, .05);
         expect(0.449).not.toBeWithinPrecision(.5, .05);
         expect(0.501).toBeWithinPrecision(.5, .001);
         expect(0.5011).not.toBeWithinPrecision(.5, .001);
+
+        expect(0.5).toBeWithinPrecision(.5, [0]);
+        expect(0.45).toBeWithinPrecision(.5, [.05]);
+        expect(0.449).not.toBeWithinPrecision(.5, [.05]);
+        expect(0.501).toBeWithinPrecision(.5, [.001]);
+        expect(0.5011).not.toBeWithinPrecision(.5, [.001]);
 
         expect(0.1).toBeWithinPrecision(.5, [.5, .1]);
         expect(0.8).not.toBeWithinPrecision(.5, [.5, .1]);
