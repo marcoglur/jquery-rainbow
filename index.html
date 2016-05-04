@@ -147,14 +147,20 @@
         swap.randomColors(swap.data("randomColors"))
 
         var test = $("div.test").data("randomColors", {
-            sequence: {tolerance: 0.2, fwd: true, step: 12},
+            sequence: {tolerance: 0.2, fwd: true, step: 12, parts:["r", "g", "b"]},
             elements: 100,
             initialize: true,
             css: {height: ".1em"},
-            timeout: 80,
+            timeout: 60,
             colors: {r: ["#b", "#F"], g: ["#b", "#F"], b: ["#b", "#F"], a: [0.3, 0.7]}
         })
         test.randomColors(test.data("randomColors"))
+
+        var test2 = $("div.test2").data("randomColors", $.extend({}, test.data("randomColors"),{
+            sequence: {tolerance: 0.4, fwd: false, step: 12, parts:"b"},
+            colors: {r: "#8", g: "#8", b: ["#3", "#c"], a: 1}
+        }))
+        test2.randomColors(test2.data("randomColors"))
 
         var def2 = $("div.default2").data("randomColors", {
             initialize: false,
@@ -187,7 +193,7 @@
             ascending: true,
             timeout: 60,
             elements: 3, //content:true,
-            sequence: {randomize: false, step: 8, tolerance: 0.6}
+            sequence: {randomize: false, parts:"r", step: 8, tolerance: 0.6}
         });
         red.randomColors(red.data("randomColors"));
 
@@ -220,6 +226,7 @@
         $("div.rwrap").randomColors("stop")
                 .randomColors("randomColor").each(function () {
             var $this = $(this);
+            $this.attr("title", $this.attr("class"))
             var click = function (event) {
                 event.preventDefault()
                 if (event.altKey) {
@@ -276,12 +283,20 @@
                 <div class="rwrap red">
                 </div>
             </div>
+
             <div class="ui-block-d">
                 <div class="rwrap right">
                 </div>
                 <div class="rwrap left">
                 </div>
                 <div style="clear:right"><!-- --></div>
+            </div>
+
+            <div class="ui-block-a ">
+                <div>
+                    <div class="rwrap test2">
+                    </div>
+                </div>
             </div>
             <div class="ui-block-d">
                 <div class="rwrap desc">
@@ -298,7 +313,7 @@
     </div>
     <div data-role="footer">
         <p>
-            Copyright 2015 Marco Glur<br/>
+            Copyright 2016 Marco Glur<br/>
             Open source under MIT license
         </p>
     </div>
